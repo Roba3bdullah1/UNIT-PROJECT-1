@@ -1,0 +1,18 @@
+{
+    "income": [
+        {
+            "amount": 500.0,
+            "category": "salary",
+            "date": "2025-06-29T20:19:40.368816"
+        }
+    ],
+    "expenses": [
+        {
+            "amount": 200.0,
+            "category": "food",
+            "date": "2025-06-29T20:20:21.467806"
+        }
+    ],
+    "goal_amount": null,
+    "goal_deadline": null
+}

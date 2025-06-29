@@ -39,9 +39,9 @@ def add_expense(user):
 def show_summary(user):
     summary = user.get_summary()
     print("--- BUDGET Summary ---")
-    print(f"Total Income: {summary['total_income']}")
-    print(f"Total Expenses : {summary['total_expenses']}")
-    print(f"Balance : {summary['balance']}")
+    print(f"Total Income: {summary.get('total_income', 0)}")
+    print(f"Total Expenses : {summary.get('total_expenses', 0)}")
+    print(f"Balance : {summary.get('balance', 0)}")
 
     print("Income by category:")
     for category,amount in summary['by_income'].items():
@@ -53,7 +53,6 @@ def show_summary(user):
 
 
 user = MangeUser()
-
 while True:
     print('''
     
@@ -72,6 +71,7 @@ while True:
         success = user.login_user()
         if success:
             current_user = user.get_current_user()
+            current_user.load_budget()
 
             while True:
                 print("-"*40)
@@ -93,21 +93,33 @@ while True:
                 if user_input2 == "1":
                     add_income(current_user)
                 elif user_input2 == "2":
-                    pass
+                    add_expense(current_user)
                 elif user_input2 == "3":
-                    pass
+                    show_summary(current_user)
                 elif user_input2 == "4":
-                    pass
+                    current_user.show_category_details()
                 elif user_input2== "5":
                     pass
                 elif user_input2 == "6":
-                    pass
+                    print(''' 
+                    1. Set new goal.
+                    2. Track your goal.
+                          ''')
+                    goal_choies = input("Your choice:")
+                    if goal_choies == "1":
+                        current_user.set_goal()
+                    elif goal_choies == "2":
+                        current_user.track_goal()
+                    else:
+                        print("Invalid choice")
+                       
                 elif user_input2 == "7":
-                    pass
+                   current_user.check_notifications()
                 elif user_input2 == "8":
                     pass
                 elif user_input2 == "9":
                     print("Log out...")
+                    current_user.save_data()
                     break
                     
                 else:
