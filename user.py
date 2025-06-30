@@ -3,6 +3,8 @@ from datetime import datetime
 import os 
 import openai
 from dotenv import load_dotenv
+from tqdm import tqdm
+
 load_dotenv()
 
 openai.api_key= os.getenv("OPENAI_API_KEY")
@@ -121,12 +123,26 @@ class User:
         return result
     
     def get_summary(self):
+        total_income = self.get_total_income()
+        total_expense = self.get_total_expense()
+        balance = self.get_balance()
+        
+        income_by_category = self.category(self.income)
+        expense_by_category = self.category(self.expenses)
+
+    
+        expense_percentage = {}
+        if total_expense > 0:
+            for category, amount in expense_by_category.items():
+                expense_percentage[category] = (amount / total_expense) * 100
+        
         return {
             "total_income" : self.get_total_income(),
             "total_expenses" : self.get_total_expense(),
             "balance" : self.get_balance(),
             "by_income" : self.category(self.income),
             "by_expense": self.category(self.expenses),
+            "expenses_percentage": expense_percentage
             
         }
     
@@ -164,27 +180,64 @@ class User:
         with open(filename,"w") as f:
             json.dump(data,f,indent=4)
 
+    def update_category(self):
+        print("\nChoose the type of category you want to update:")
+        print("1. Income Category")
+        print("2. Expense Category")
+        
+        category_type = input("Enter the number (1 or 2): ")
 
-    def show_category_details(self):
-        print("\n--- Income Details ---")
-        if not self.income:
-            print("No income record found")
+        if category_type == "1":
+            self.update_income()
+        elif category_type == "2":
+            self.update_expense()
         else:
-            for i in self.income:
-                category = i.get("category","Uncategorized")
-                amount = i.get("amount", 0)
-                date = i.get("date", "Unknown")
-                print(f"Category: {category} | Amount: {amount:.2f} | Date: {date}")
+            print("Invalid choice. Please try again.")
+    
+    def update_income(self):
+        print("\n--- Income Categories ---")
+        for i, income in enumerate(self.income, 1):
+            print(f"{i}. Category: {income['category']} | Amount: {income['amount']} | Date: {income['date']}")
+        try:
+            category_number = int(input("\nEnter the number of the income category to update: "))
+            if category_number < 1 or category_number > len(self.income):
+                print("Invalid choice. Please try again.")
+                return
 
-        print("\n--- Expense Details ---")
-        if not self.expenses:
-            print("No expense records found.")
-        else:
-            for i in self.expenses:
-                category = i.get("category", "Uncategorized")
-                amount = i.get("amount", 0)
-                date = i.get("date", "Unknown")
-                print(f"Category: {category} | Amount: {amount:.2f} | Date: {date}")
+           
+            selected_income = self.income[category_number - 1]
+            new_category = input(f"Enter new category name (current: {selected_income['category']}): ")
+            new_amount = float(input(f"Enter new amount (current: {selected_income['amount']}): "))
+            selected_income['category'] = new_category if new_category else selected_income['category']
+            selected_income['amount'] = new_amount if new_amount else selected_income['amount']
+            print(f"Income category updated successfully: {selected_income}")
+            self.save_data()
+
+        except ValueError:
+            print("Invalid input. Please try again.")
+
+
+    def update_expense(self):
+        print("\n--- Expense Categories ---")
+        for i, expense in enumerate(self.expenses, 1):
+            print(f"{i}. Category: {expense['category']} | Amount: {expense['amount']} | Date: {expense['date']}")
+        try:
+            category_number = int(input("\nEnter the number of the expense category to update: "))
+            if category_number < 1 or category_number > len(self.expenses):
+                print("Invalid choice. Please try again.")
+                return
+
+            selected_expense = self.expenses[category_number - 1]
+            new_category = input(f"Enter new category name (current: {selected_expense['category']}): ")
+            new_amount = float(input(f"Enter new amount (current: {selected_expense['amount']}): "))
+            selected_expense['category'] = new_category if new_category else selected_expense['category']
+            selected_expense['amount'] = new_amount if new_amount else selected_expense['amount']
+            print(f"Expense category updated successfully: {selected_expense}")
+            self.save_data()
+
+        except ValueError:
+            print("Invalid input. Please try again.")        
+
 
     
     def check_notifications(self):
@@ -192,20 +245,25 @@ class User:
         balance = self.get_balance()
 
         if balance < 100:
-            notifications.append("Your balance is low")
+            notifications.append("Your balance is low. saving more.")
         if self.get_total_expense() > self.get_total_income():
-            notifications.append("You are spending more than your income.")
+            notifications.append("You are spending more than your income. Review your expenses.")
         if not self.income and not self.expenses:
             notifications.append("No income or expenses recorded yet. ")
-        else :
-            notifications.append("you are in normal")
-
+        if balance > self.get_total_expense():
+            notifications.append("You have a surplus! You can afford to spend more or save.")
         if self.goal_deadline and datetime.now() > self.goal_deadline:
             if self.get_balance() < self.goal_amount:
                 notifications.append(f"You missed your goal! Deadline: {self.goal_deadline} | Goal: {self.goal_amount}")
+            else:
+                notifications.append(f"Congratulations! You met your goal! Deadline: {self.goal_deadline} | Goal: {self.goal_amount}")
+
+        if self.goal_amount and balance < self.goal_amount:
+            remaining = self.goal_amount - balance
+            notifications.append(f"You are {remaining:.2f} away from your goal! Keep going.")
 
         if notifications:
-            print("Notifications")
+            print("\n--- Notifications ---")
             for i in notifications:
                 print("-",i)
         else:
@@ -214,6 +272,7 @@ class User:
         
     def set_goal(self):
         try:
+            print("\n--- Set Goal ---")
             amount = float(input("Enter your goal amount:"))
             deadline= input("Enter deadline (YYYY-MM-DD):")
             deadline = datetime.fromisoformat(deadline)
@@ -235,36 +294,30 @@ class User:
         remaining = balance - self.goal_amount 
         days_left = (self.goal_deadline - datetime.now()).days
 
-        print(f"Goal : {self.goal_amount}")
-        print(f"Current balance : {balance}")
-        print(f"Days left : {days_left}")
+        progress = (balance / self.goal_amount) * 100
+        progress=min(progress,100)
 
-        if remaining >  self.goal_amount:
-            print("you can expenses more")
-        elif remaining == self.goal_amount:
-            print("Congrates, You reached your goal!")
+        print("\n--- Goal Progress ---")
+        with tqdm(total=100,desc="Progress", ncols=100) as pbar:
+            pbar.update(int(progress))
+
+        print(f"Goal : {self.goal_amount} - Current balance: {balance}")
+        print(f"Progress: {progress:.2f}%")
+        print(f"Days left : {days_left} days")
+
+        if progress == 100:
+            print("Congratulations! You've reached your goal!")
+        elif balance > self.goal_amount:
+            print("You have surpassed your goal, Great job!")
+        elif remaining > 0:
+            print(f"You're {remaining:.2f} away from reaching your goal.")
         else:
-            print("there is no balance")
+            print("You are on track, keep going!")
 
-    def export_data(self, filename=None):
-        if filename is None:
-            filename = f"{self.username}_budget_export.json"
-        
-        data = {
-            "income" : self.income,
-            "expenses" : self.expenses,
-            "goal_amount" : self.goal_amount,
-            "goal_deadline" : self.goal_deadline.isoformat() if self.goal_deadline else None
-        }
-
-        try:
-            with open(filename, "w") as f:
-                json.dump(data, f, indent=4)
-            print(f"Data exported successfully to {filename}")
-        except Exception as e:
-            print(f"Failed to export data: {e}")
+    
 
     def get_chatgpt_suggestions(self):
+        print("\n--- Getting smart suggestions from ChatGPT ---")
         prompt = (f"""
             I am using a personal budget calculator . Here is my financial data:
             - Total income: {self.get_total_income()}

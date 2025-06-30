@@ -10,13 +10,10 @@ def add_income(user):
     try:
         amount = float(input("Enter income amount : "))
         category = input("Enter income category : ")
-
         if not category:
             category = ""
-
         user.add_income(amount,category)
         print(f"Income of {amount} added to category {category}")
-
     except ValueError:
         print("Invalid amount. please enter number.")
 
@@ -32,10 +29,9 @@ def add_expense(user):
 
             user.add_expense(amount,category)
             print(f"Expense of {amount} added to category {category}")
-            another = input("do you want to add anather expense (y/n): ").lower()
-            if another == "n":
+            expense2 = input(" Do you want to add anather expense (y/n): ").lower()
+            if expense2 == "n":
                 flag = False
-
         except ValueError:
             print("Invalid amount. please enter number.")
 
@@ -52,8 +48,14 @@ def show_summary(user):
         print(f" - {category}: {amount}")
 
     print("Expenses by category:")
-    for category,amount in summary['by_expense'].items():
-        print(f" - {category}: {amount}")
+    if summary['total_expenses'] > 0:
+        expenses_sorted = sorted(summary['by_expense'].items(), key=lambda x: x[1], reverse=True)
+        for category,amount in expenses_sorted:
+            percentage = summary["expenses_percentage"].get(category, 0)
+            print(f" - {category}: {amount} | {percentage:.2f}%")
+
+    else:
+        print("No expenses recorded.")
 
 
 user = MangeUser()
@@ -83,9 +85,8 @@ while True:
         4. Update category details
         5. Track goal
         6. View notifications
-        7. Import your data
-        8. Get smart suggestions
-        9. Log out ''')
+        7. Get smart suggestions
+        8. Log out ''')
                 print("-"*35)
 
                 user_input2 = input("Your choice : ")
@@ -96,28 +97,25 @@ while True:
                 elif user_input2 == "3":
                     show_summary(current_user)
                 elif user_input2== "4":
-                    print("\n--Update category--")
-
+                    current_user.update_category()
                 elif user_input2 == "5":
-                    print(''' 
-                    1. Set new goal.
-                    2. Track your goal.
-                          ''')
-                    goal_choies = input("Your choice:")
+                    print('''
+        1. Set new goal.
+        2. Track your goal.''')
+                    print("-"*35)
+                    goal_choies = input("Your choice : ")
                     if goal_choies == "1":
                         current_user.set_goal()
                     elif goal_choies == "2":
                         current_user.track_goal()
                     else:
-                        print("Invalid choice")     
+                        print("Invalid choice")  
+
                 elif user_input2 == "6":
                     current_user.check_notifications()
                 elif user_input2 == "7":
-                    current_user.export_data()
+                    print(current_user.get_chatgpt_suggestions())  
                 elif user_input2 == "8":
-                    print("\n---Getting smart suggestions from ChatGPT---")
-                    print(current_user.get_chatgpt_suggestions())
-                elif user_input2 == "9":
                     print("Log out...")
                     current_user.save_data()
                     break    
