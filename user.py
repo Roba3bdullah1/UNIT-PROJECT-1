@@ -1,7 +1,11 @@
 import json 
-import os
 from datetime import datetime
+import os 
+import openai
+from dotenv import load_dotenv
+load_dotenv()
 
+openai.api_key= os.getenv("OPENAI_API_KEY")
 
 class MangeUser:
 
@@ -23,11 +27,16 @@ class MangeUser:
 
 
     def register_user(self):
-        username = input("Enter an username: ")
-        password = input("Enter a passeord: ")
-
+        username = input("Enter an username: ").strip()
+        if not username:
+            print("Username cannot be empty.")
         if username in self.users:
             print("Username already exists.")
+            return False
+        
+        password = input("Enter a passeord: ").strip()
+        if len(password) < 4:
+            print("Password must be at least 4 characters.")
             return False
 
         self.users[username] = password
@@ -36,8 +45,12 @@ class MangeUser:
         return True
 
     def login_user(self):
-        username = input("Enter an username: ")
-        password = input("Enter a passeord: ")
+        username = input("Enter an username: ").strip()
+        password = input("Enter a passeord: ").strip()
+
+        if not username or not password:
+            print("Username and password cannot be empty.")
+            return False
 
         if username in self.users and self.users[username] == password:
             print(f"\nHello, {username}!")
@@ -66,10 +79,9 @@ class User:
 
     def add_income(self,amount:float, category:str):
         income_list = {
-            "amount": amount,
-            "category": category,
-            "date": datetime.now().isoformat()
-
+            "amount" : amount,
+            "category" : category,
+            "date" : datetime.now().isoformat()
         }
 
         self.income.append(income_list)
@@ -77,9 +89,9 @@ class User:
 
     def add_expense(self,amount:float, category:str):
         expense_list = {
-            "amount": amount,
-            "category": category,
-            "date": datetime.now().isoformat()
+            "amount" : amount,
+            "category" : category,
+            "date" : datetime.now().isoformat()
 
         }
 
@@ -110,7 +122,7 @@ class User:
     
     def get_summary(self):
         return {
-            "total_income": self.get_total_income(),
+            "total_income" : self.get_total_income(),
             "total_expenses" : self.get_total_expense(),
             "balance" : self.get_balance(),
             "by_income" : self.category(self.income),
@@ -142,10 +154,10 @@ class User:
     def save_data(self):
         filename = f"{self.username}_budget.json"
         data = {
-            "income": self.income,
-            "expenses":self.expenses,
-            "goal_amount": self.goal_amount,
-            "goal_deadline": self.goal_deadline.isoformat() if self.goal_deadline else None
+            "income" : self.income,
+            "expenses" : self.expenses,
+            "goal_amount" : self.goal_amount,
+            "goal_deadline" : self.goal_deadline.isoformat() if self.goal_deadline else None
 
         }
 
@@ -182,9 +194,15 @@ class User:
         if balance < 100:
             notifications.append("Your balance is low")
         if self.get_total_expense() > self.get_total_income():
-            notifications.append(" -ALERTS- You are spending more than your income.")
+            notifications.append("You are spending more than your income.")
         if not self.income and not self.expenses:
-            print(" -ALERTS- No income or expenses recorded yet. ")
+            notifications.append("No income or expenses recorded yet. ")
+        else :
+            notifications.append("you are in normal")
+
+        if self.goal_deadline and datetime.now() > self.goal_deadline:
+            if self.get_balance() < self.goal_amount:
+                notifications.append(f"You missed your goal! Deadline: {self.goal_deadline} | Goal: {self.goal_amount}")
 
         if notifications:
             print("Notifications")
@@ -214,27 +232,29 @@ class User:
             print("No goal set yet.")
             return
         balance = self.get_balance()
-        remaining = self.goal_amount - balance
+        remaining = balance - self.goal_amount 
         days_left = (self.goal_deadline - datetime.now()).days
 
-        print(f"Goal: {self.goal_amount}")
-        print(f"Current balance: {balance}")
-        print(f"Days left: {days_left}")
+        print(f"Goal : {self.goal_amount}")
+        print(f"Current balance : {balance}")
+        print(f"Days left : {days_left}")
 
-        if remaining <= 0:
-            print("Congrates, You reached your goal!") 
+        if remaining >  self.goal_amount:
+            print("you can expenses more")
+        elif remaining == self.goal_amount:
+            print("Congrates, You reached your goal!")
         else:
-            print(f"You need {remaining} more to reach your goal.")
+            print("there is no balance")
 
     def export_data(self, filename=None):
         if filename is None:
             filename = f"{self.username}_budget_export.json"
         
         data = {
-            "income": self.income,
-            "expenses": self.expenses,
-            "goal_amount": self.goal_amount,
-            "goal_deadline": self.goal_deadline.isoformat() if self.goal_deadline else None
+            "income" : self.income,
+            "expenses" : self.expenses,
+            "goal_amount" : self.goal_amount,
+            "goal_deadline" : self.goal_deadline.isoformat() if self.goal_deadline else None
         }
 
         try:
@@ -243,6 +263,33 @@ class User:
             print(f"Data exported successfully to {filename}")
         except Exception as e:
             print(f"Failed to export data: {e}")
+
+    def get_chatgpt_suggestions(self):
+        prompt = (f"""
+            I am using a personal budget calculator . Here is my financial data:
+            - Total income: {self.get_total_income()}
+            - Total expenses: {self.get_total_expense()}
+            - Current balance: {self.get_balance()}
+            - Income categories: {self.category(self.income)}
+            - Expense categories: {self.category(self.expenses)}
+            Based on my data, please give me personalized financial advice to improve my savings, reduce unnecessary expenses, and plan for financial goals.
+                """  ) 
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",  
+                messages=[
+                    {"role": "system", "content": "You are a helpful financial assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+
+            
+            suggestions = response['choices'][0]['message']['content']
+            return suggestions
+
+        except Exception as e:
+            return f"Error: {e}"
 
 
     

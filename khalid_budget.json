@@ -1,0 +1,26 @@
+{
+    "income": [
+        {
+            "amount": 6000.0,
+            "category": "salary",
+            "date": "2025-06-30T11:00:40.878187"
+        }
+    ],
+    "expenses": [
+        {
+            "amount": 2000.0,
+            "category": "rent",
+            "date": "2025-06-30T11:01:06.263579"
+        },
+        {
+            "amount": 500.0,
+            "category": "bills",
+            "date": "2025-06-30T11:01:21.440221"
+        },
+        {
+         
+        }
+    ],
+    "goal_amount": null,
+    "goal_deadline": null
+}
