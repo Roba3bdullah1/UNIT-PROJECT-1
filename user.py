@@ -4,7 +4,8 @@ import os
 import openai
 from dotenv import load_dotenv
 from tqdm import tqdm
-
+from colorama import init,Fore, Back, Style
+init(autoreset=True)
 load_dotenv()
 
 openai.api_key= os.getenv("OPENAI_API_KEY")
@@ -12,41 +13,47 @@ openai.api_key= os.getenv("OPENAI_API_KEY")
 class MangeUser:
 
     def __init__(self,filename="users.json"):
+        ''' Initializes the MangeUser object '''
         self.filename= filename
         self.users = self.load_users()
         self.logged_in_user = None
         self.user_objects = {}
 
     def load_users(self):
+        ''' Loads existing user data from the json file '''
         if os.path.exists(self.filename):
             with open(self.filename,"r") as f:
                 return json.load(f)
         return {}
 
     def save_users(self):
+        ''' Saves the current state of the users dictionary to the json file '''
         with open(self.filename,"w") as f:
             json.dump(self.users, f, indent=4)
 
 
     def register_user(self):
+        ''' Registers a new user by input a username and password '''
         username = input("Enter an username: ").strip()
         if not username:
-            print("Username cannot be empty.")
+            print(Fore.RED + "Username cannot be empty.")
         if username in self.users:
-            print("Username already exists.")
+            print( Fore.GREEN + "Username already exists.")
             return False
         
         password = input("Enter a passeord: ").strip()
         if len(password) < 4:
-            print("Password must be at least 4 characters.")
+            print(Fore.RED + "Password must be at least 4 characters.")
             return False
-
+        
+        # add new user to dictionary and save
         self.users[username] = password
         self.save_users()
-        print("Registation successful!")
+        print(Fore.GREEN + "Registation successful!")
         return True
 
     def login_user(self):
+        ''' Logs in an existing user by checking username and password '''
         username = input("Enter an username: ").strip()
         password = input("Enter a passeord: ").strip()
 
@@ -55,14 +62,18 @@ class MangeUser:
             return False
 
         if username in self.users and self.users[username] == password:
-            print(f"\nHello, {username}!")
+            print(Fore.BLUE + f"\nHello, {username}!")
             self.logged_in_user = username
             return True
         else:
-            print ("Invaild username or password")
+            print()
+
+            print (Fore.RED + "Invaild username or password")
+            print("-")*35
             return False
     
     def get_current_user(self):
+        ''' Returns the User object for the currently logged-in user '''
         if not self.logged_in_user:
             return None
         if self.logged_in_user not in self.user_objects:
@@ -73,6 +84,7 @@ class MangeUser:
 class User:
 
     def __init__(self,username:str):
+        ''' Initializes the User object '''
         self.username = username
         self.income = []
         self.expenses = []
@@ -80,6 +92,7 @@ class User:
         self.goal_deadline = None
 
     def add_income(self,amount:float, category:str):
+        ''' Adds a new income to the user's income list '''
         income_list = {
             "amount" : amount,
             "category" : category,
@@ -90,6 +103,7 @@ class User:
         self.save_data()
 
     def add_expense(self,amount:float, category:str):
+        ''' Adds a new expense to the user's expense list '''
         expense_list = {
             "amount" : amount,
             "category" : category,
@@ -100,16 +114,18 @@ class User:
         self.expenses.append(expense_list)
         self.save_data()
 
+    # create getter
     def get_total_income(self):
-        return sum(i["amount"] for i in self.income)
+        return sum(i["amount"] for i in self.income) # sum all income amounts
     
     def get_total_expense(self):
-        return sum(i["amount"] for i in self.expenses)
+        return sum(i["amount"] for i in self.expenses) # sum all expense amounts
     
     def get_balance(self):
         return self.get_total_income() - self.get_total_expense()
     
     def category(self,data_list):
+        ''' Groups income or expenses by category and sums their amount '''
         result = {}
         for i in data_list:
             category = i["category"]
@@ -123,6 +139,7 @@ class User:
         return result
     
     def get_summary(self):
+        ''' Provides summary of the user's data '''
         total_income = self.get_total_income()
         total_expense = self.get_total_expense()
         balance = self.get_balance()
@@ -130,7 +147,7 @@ class User:
         income_by_category = self.category(self.income)
         expense_by_category = self.category(self.expenses)
 
-    
+        # Calculate percent each expense category 
         expense_percentage = {}
         if total_expense > 0:
             for category, amount in expense_by_category.items():
@@ -147,6 +164,7 @@ class User:
         }
     
     def load_budget(self):
+        # Load user's budget data from a json file 
         filename = f"{self.username}_budget.json"
         if os.path.exists(filename):
             with open(filename,"r") as f:
@@ -168,6 +186,8 @@ class User:
             self.goal_deadline = None
 
     def save_data(self):
+        ''' Save user's data to json file'''
+    
         filename = f"{self.username}_budget.json"
         data = {
             "income" : self.income,
@@ -181,6 +201,8 @@ class User:
             json.dump(data,f,indent=4)
 
     def update_category(self):
+        ''' Allows the user to update income or expense categories '''
+
         print("\nChoose the type of category you want to update:")
         print("1. Income Category")
         print("2. Expense Category")
@@ -192,9 +214,10 @@ class User:
         elif category_type == "2":
             self.update_expense()
         else:
-            print("Invalid choice. Please try again.")
+            print( Fore.RED + "Invalid choice. Please try again.")
     
     def update_income(self):
+        ''' Show income categories and allow user to update one'''
         print("\n--- Income Categories ---")
         for i, income in enumerate(self.income, 1):
             print(f"{i}. Category: {income['category']} | Amount: {income['amount']} | Date: {income['date']}")
@@ -203,21 +226,22 @@ class User:
             if category_number < 1 or category_number > len(self.income):
                 print("Invalid choice. Please try again.")
                 return
-
-           
             selected_income = self.income[category_number - 1]
             new_category = input(f"Enter new category name (current: {selected_income['category']}): ")
             new_amount = float(input(f"Enter new amount (current: {selected_income['amount']}): "))
+
+            # Update category and amount 
             selected_income['category'] = new_category if new_category else selected_income['category']
             selected_income['amount'] = new_amount if new_amount else selected_income['amount']
-            print(f"Income category updated successfully: {selected_income}")
+            print(Fore.GREEN + f"Income category updated successfully: {selected_income}")
             self.save_data()
 
         except ValueError:
-            print("Invalid input. Please try again.")
+            print(Fore.RED + "Invalid input. Please try again.")
 
 
     def update_expense(self):
+        ''' Lists all expense entries and allows the user to update one'''
         print("\n--- Expense Categories ---")
         for i, expense in enumerate(self.expenses, 1):
             print(f"{i}. Category: {expense['category']} | Amount: {expense['amount']} | Date: {expense['date']}")
@@ -232,47 +256,48 @@ class User:
             new_amount = float(input(f"Enter new amount (current: {selected_expense['amount']}): "))
             selected_expense['category'] = new_category if new_category else selected_expense['category']
             selected_expense['amount'] = new_amount if new_amount else selected_expense['amount']
-            print(f"Expense category updated successfully: {selected_expense}")
+            print(Fore.GREEN + "Expense category updated successfully")
             self.save_data()
 
         except ValueError:
-            print("Invalid input. Please try again.")        
+            print(Fore.RED + "Invalid input. Please try again.")        
 
 
     
     def check_notifications(self):
+        '''  Displays notifications based on the user's current balance,
+    spending habits, and goal status.'''
+       
         notifications = []
         balance = self.get_balance()
 
-        if balance < 100:
-            notifications.append("Your balance is low. saving more.")
-        if self.get_total_expense() > self.get_total_income():
-            notifications.append("You are spending more than your income. Review your expenses.")
-        if not self.income and not self.expenses:
+        print("\n--------- Notifications ----------")
+        # Check if balance is zero
+        if balance == 0:
+            notifications.append("Your balance is 0 ")
+        # Check if total expenses exceed total income
+        elif self.get_total_expense() > self.get_total_income():
+            notifications.append("You are spending more than your income . Review your expenses.")
+        # Check if no income or expenses have been recorded
+        elif not self.income and not self.expenses:
             notifications.append("No income or expenses recorded yet. ")
-        if balance > self.get_total_expense():
+        # If balance is greater than total expenses, indicate surplus
+        elif balance > self.get_total_expense():
+            print(f"- Your balance now is : {balance}")
             notifications.append("You have a surplus! You can afford to spend more or save.")
-        if self.goal_deadline and datetime.now() > self.goal_deadline:
-            if self.get_balance() < self.goal_amount:
-                notifications.append(f"You missed your goal! Deadline: {self.goal_deadline} | Goal: {self.goal_amount}")
-            else:
-                notifications.append(f"Congratulations! You met your goal! Deadline: {self.goal_deadline} | Goal: {self.goal_amount}")
-
-        if self.goal_amount and balance < self.goal_amount:
-            remaining = self.goal_amount - balance
-            notifications.append(f"You are {remaining:.2f} away from your goal! Keep going.")
-
+        
+        # Print notifications
         if notifications:
-            print("\n--- Notifications ---")
             for i in notifications:
-                print("-",i)
+                print(Fore.YELLOW +"-", Fore.YELLOW + i)
         else:
             print("NO notifications")
 
         
     def set_goal(self):
+        '''  Sets a new goal and deadline for the user '''
         try:
-            print("\n--- Set Goal ---")
+            print("\n------------ Set Goal ------------")
             amount = float(input("Enter your goal amount:"))
             deadline= input("Enter deadline (YYYY-MM-DD):")
             deadline = datetime.fromisoformat(deadline)
@@ -281,34 +306,42 @@ class User:
             self.goal_amount= amount
             self.deadline = deadline
             self.save_data()
-            print(f"Goal of {amount} set for {deadline}")
+            print(Fore.GREEN + f"Goal of {amount} set for {deadline}")
         except ValueError:
-            print("Invalid input. Please try again.")
+            print(Fore.RED +"Invalid input. Please try again.")
 
 
     def track_goal(self):
+        ''' Displays the user's progress '''
+        # Check if a goal is set
         if self.goal_amount is None or self.goal_deadline is None:
             print("No goal set yet.")
             return
         balance = self.get_balance()
-        remaining = balance - self.goal_amount 
+        remaining = balance - self.goal_amount # Calculate surplus or deficit
         days_left = (self.goal_deadline - datetime.now()).days
-
+         # Calculate progress percentage toward goal
         progress = (balance / self.goal_amount) * 100
         progress=min(progress,100)
 
-        print("\n--- Goal Progress ---")
+        print("\n--------- Goal Progress ---------")
+
+        # Show a progress bar using tqdm 
         with tqdm(total=100,desc="Progress", ncols=100) as pbar:
             pbar.update(int(progress))
 
-        print(f"Goal : {self.goal_amount} - Current balance: {balance}")
+        print(f"Goal : {self.goal_amount} ")
+        print(f"Current balance: {balance}")
         print(f"Progress: {progress:.2f}%")
         print(f"Days left : {days_left} days")
 
+        # Show messages based on user's goal progress and current balance
         if progress == 100:
-            print("Congratulations! You've reached your goal!")
+            print(Fore.GREEN + "Congratulations! You've reached your goal!")
         elif balance > self.goal_amount:
-            print("You have surpassed your goal, Great job!")
+            print(Fore.GREEN + "You have surpassed your goal, Great job!")
+        elif balance < self.goal_amount:
+            print(Fore.RED + "You can't reach your goal beacuse the balance is less than your goal ")
         elif remaining > 0:
             print(f"You're {remaining:.2f} away from reaching your goal.")
         else:
@@ -317,7 +350,10 @@ class User:
     
 
     def get_chatgpt_suggestions(self):
+        ''' Sends the user's financial summary to ChatGPT and returns suggestions '''
+       
         print("\n--- Getting smart suggestions from ChatGPT ---")
+
         prompt = (f"""
             I am using a personal budget calculator . Here is my financial data:
             - Total income: {self.get_total_income()}
