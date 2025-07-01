@@ -9,34 +9,36 @@
 - Organize Your Code into modules & (or packages)
 - Use git & Github to track changes in your code.
 
-## Example Project :  An online Grocery Store :
+## Project : Smart Budget Calculator :
 
-#### Overview : An online store that sells fruits to customers. This online store has 2 main users. The customer and the manager of the store . Each one of them should be able to do the following tasks for the store to function properly . 
+#### Overview : A smart budgeting system for managing personal finances effectively. that helps users track income and expenses, set financial goals, and get smart financial suggestions using ChatGPT. 
 
 ### Features & User Stories
-#### As a customer I should be able to do the following :
-- Browse  Products . 
-- View the product info (summary, specs, price, quantity , etc.)
-- Search for Products.
-- Get recommendations for my next purchase based on my purchase history.
-- Add Products to the shopping cart .
-- Remove a product from the shopping cart.
-- List the products in my shopping cart. 
-- Continue to checkout . 
-- Fill in my address for delivery.
-- Get receipt of my purchases.
-- Check delivery status . 
-
+#### As a user, I should be able to: 
+- Register and create account.
+- Log in to my existing account.
+- Add income with category and amount.
+- Add expenses with category and amount.
+- View a summary of my budget:
+- Receive smart notifications
+- Set financial goals (e.g., save 5000 by 2025-12-31).
+- Track my progress toward the goal with a progress bar and feedback.
+- Edit income or expense categories and amounts.
+- Get personalized financial suggestions from ChatGPT based on current financial data.
 
 
 #### Usage :
- Explain to the user how to use your project . 
- for example:
- - type in search product_name to search for a product.
- - type in list_products to show all the products in the grocery.
- - type in show product_name to get information about this product.
- - type in buy product_name to buy the product . 
- - and so on...
+ - Choose Sign Up to create a new account.
+ - Choose Log In to access your dashboard.
+ - After Logging In:
+ - Choose 1 to add income 
+ - Choose 2 Add expense 
+ - Choose 3 to view a budget summary – See totals and categories.
+ - Choose 4 to update category – Edit income/expense entries.
+ - Choose 5 to mManage Financial Goals – Set or track a goal.
+ - Choose 6 to view notifications – Get alerts about your spending.
+ - Choose 7 to get smart suggestions – Receive AI-powered financial advice.
+ - Choose 8 to Log out – Exit 
 
 
 ### For your project. Edit this README.md file to include your own project name,  overview, user stories, and usage. 

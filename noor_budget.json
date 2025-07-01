@@ -1,0 +1,33 @@
+{
+    "income": [
+        {
+            "amount": 5000.0,
+            "category": "salary",
+            "date": "2025-07-02T01:55:32.737879"
+        },
+        {
+            "amount": 1000.0,
+            "category": "freelance",
+            "date": "2025-07-02T01:55:57.738557"
+        }
+    ],
+    "expenses": [
+        {
+            "amount": 1200.0,
+            "category": "purchases",
+            "date": "2025-07-02T01:56:51.353984"
+        },
+        {
+            "amount": 800.0,
+            "category": "Entertainment",
+            "date": "2025-07-02T01:57:21.527343"
+        },
+        {
+            "amount": 1500.0,
+            "category": "rent",
+            "date": "2025-07-02T01:57:35.957211"
+        }
+    ],
+    "goal_amount": 4000.0,
+    "goal_deadline": "2025-09-02T00:00:00"
+}

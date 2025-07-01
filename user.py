@@ -37,6 +37,11 @@ class MangeUser:
         username = input("Enter an username: ").strip()
         if not username:
             print(Fore.RED + "Username cannot be empty.")
+
+        if username[0].isdigit():
+           print(Fore.RED + "Username cannot start with a number.")
+           return False
+    
         if username in self.users:
             print( Fore.GREEN + "Username already exists.")
             return False
@@ -67,9 +72,8 @@ class MangeUser:
             return True
         else:
             print()
-
             print (Fore.RED + "Invaild username or password")
-            print("-")*35
+            print("-" * 35)
             return False
     
     def get_current_user(self):
@@ -276,16 +280,31 @@ class User:
         if balance == 0:
             notifications.append("Your balance is 0 ")
         # Check if total expenses exceed total income
-        elif self.get_total_expense() > self.get_total_income():
+        if self.get_total_expense() > self.get_total_income():
             notifications.append("You are spending more than your income . Review your expenses.")
         # Check if no income or expenses have been recorded
-        elif not self.income and not self.expenses:
+        if not self.income and not self.expenses:
             notifications.append("No income or expenses recorded yet. ")
         # If balance is greater than total expenses, indicate surplus
-        elif balance > self.get_total_expense():
+        if balance > self.get_total_expense():
             print(f"- Your balance now is : {balance}")
             notifications.append("You have a surplus! You can afford to spend more or save.")
-        
+        if self.goal_amount > balance:
+            notifications.append("Your goal is higher than your current balance — keep saving!")
+
+        if self.get_total_income() > 0:
+            spending_ratio = (self.get_total_expense() / self.get_total_income()) * 100
+            if spending_ratio >= 90:
+                notifications.append(" You've spent over 90% of your income!")
+            elif spending_ratio >= 75:
+                notifications.append("You've spent 75% of your income. Watch your budget.")
+            elif spending_ratio >= 50:
+                notifications.append(" You've used more than half your income.")
+
+        if self.expenses:
+           top_category = max(self.category(self.expenses), key=self.category(self.expenses).get)
+           notifications.append(f" Your highest expense category is '{top_category}'. Consider cutting costs there.")
+
         # Print notifications
         if notifications:
             for i in notifications:
